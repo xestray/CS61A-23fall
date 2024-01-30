@@ -13,7 +13,7 @@ def my_map(fn, seq):
     2023
     [None, None, None]
     """
-    return ______
+    return [fn(x) for x in seq]
 
 def my_filter(pred, seq):
     """Keeps elements in seq only if they satisfy pred.
@@ -31,7 +31,7 @@ def my_filter(pred, seq):
     >>> my_filter(lambda x: max(5, x) == 5, [1, 2, 3, 4, 5, 6, 7])
     [1, 2, 3, 4, 5]
     """
-    return ______
+    return [x for x in seq if pred(x)]
 
 def my_reduce(combiner, seq):
     """Combines elements in seq using combiner.
@@ -45,7 +45,12 @@ def my_reduce(combiner, seq):
     >>> my_reduce(lambda x, y: x + 2 * y, [1, 2, 3]) # (1 + 2 * 2) + 2 * 3
     11
     """
-    "*** YOUR CODE HERE ***"
+    result = seq[0]
+    k = 1
+    while k<len(seq):
+        result = combiner(result, seq[k])
+        k += 1
+    return result
 
 def my_map_syntax_check():
     """Check that your two_of_three code consists of nothing but a return statement.
@@ -89,7 +94,11 @@ def double_eights(n):
     >>> check(LAB_SOURCE_FILE, 'double_eights', ['While', 'For'])
     True
     """
-    "*** YOUR CODE HERE ***"
+    judge = (n%10==8 and n//10%10==8)
+    if n<100:
+        return judge
+    else :
+        return judge or double_eights(n//10)
 
 
 def merge(lst1, lst2):
@@ -116,7 +125,13 @@ def merge(lst1, lst2):
     >>> check(LAB_SOURCE_FILE, 'merge', ['While', 'For'])
     True
     """
-    "*** YOUR CODE HERE ***"
+    if len(lst1)==0 or len(lst2)==0:
+        return lst1+lst2
+    else :
+        if lst1[0]<=lst2[0]:
+            return [lst1[0]] + merge(lst1[1:],lst2)
+        else :
+            return [lst2[0]] + merge(lst1,lst2[1:])
 
 
 def summation(n, term):
@@ -137,7 +152,21 @@ def summation(n, term):
     True
     """
     assert n >= 1
-    "*** YOUR CODE HERE ***"
+
+    if n==1:
+        return term(n)
+    else :
+        return summation(n-1, term) + term(n)
+    """
+    another solution below:
+    def help_sum(i, term):
+        if i==n:
+            return term(i)
+        else:
+            return term(i) + help_sum(i+1, term)
+    return help_sum(1, term)
+    """
+
 
 
 def count_palindromes(L):
@@ -147,5 +176,5 @@ def count_palindromes(L):
     >>> count_palindromes(("Acme", "Madam", "Pivot", "Pip"))
     2
     """
-    return ______
+    return len( tuple( filter(lambda s:s[::-1].lower()==s.lower(), L) ) )
 
