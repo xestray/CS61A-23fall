@@ -33,7 +33,9 @@ def scheme_eval(expr, env, _=None): # Optional third argument is ignored
         return scheme_forms.SPECIAL_FORMS[first](rest, env)
     else:
         # BEGIN PROBLEM 3
-        "*** YOUR CODE HERE ***"
+        operator = scheme_eval(first, env)
+        operands = rest.map(lambda x:scheme_eval(x, env))
+        return scheme_apply(operator, operands, env)
         # END PROBLEM 3
 
 def scheme_apply(procedure, args, env):
@@ -44,21 +46,28 @@ def scheme_apply(procedure, args, env):
        assert False, "Not a Frame: {}".format(env)
     if isinstance(procedure, BuiltinProcedure):
         # BEGIN PROBLEM 2
-        "*** YOUR CODE HERE ***"
+        arg_list = []
+        while args is not nil:
+            arg_list.append(args.first)
+            args = args.rest
+        if procedure.need_env:
+            arg_list.append(env)
         # END PROBLEM 2
         try:
             # BEGIN PROBLEM 2
-            "*** YOUR CODE HERE ***"
+            return procedure.py_func(*arg_list)
             # END PROBLEM 2
         except TypeError as err:
             raise SchemeError('incorrect number of arguments: {0}'.format(procedure))
     elif isinstance(procedure, LambdaProcedure):
         # BEGIN PROBLEM 9
-        "*** YOUR CODE HERE ***"
+        new_frame = procedure.env.make_child_frame(procedure.formals, args)
+        return eval_all(procedure.body, new_frame)
         # END PROBLEM 9
     elif isinstance(procedure, MuProcedure):
         # BEGIN PROBLEM 11
-        "*** YOUR CODE HERE ***"
+        new_frame = env.make_child_frame(procedure.formals, args)
+        return eval_all(procedure.body, new_frame)
         # END PROBLEM 11
     else:
         assert False, "Unexpected procedure: {}".format(procedure)
@@ -79,7 +88,12 @@ def eval_all(expressions, env):
     2
     """
     # BEGIN PROBLEM 6
-    return scheme_eval(expressions.first, env) # replace this with lines of your own code
+    if expressions is nil:
+        return None
+    while expressions.rest is not nil:
+        scheme_eval(expressions.first, env)
+        expressions = expressions.rest
+    return scheme_eval(expressions.first, env, expressions.rest is nil) # replace this with lines of your own code
     # END PROBLEM 6
 
 
@@ -112,10 +126,30 @@ def optimize_tail_calls(unoptimized_scheme_eval):
         """
         if tail and not scheme_symbolp(expr) and not self_evaluating(expr):
             return Unevaluated(expr, env)
-
         result = Unevaluated(expr, env)
         # BEGIN OPTIONAL PROBLEM 1
-        "*** YOUR CODE HERE ***"
+        """
+        参考项目说明中的thunk_factorial函数:
+
+        def thunk_factorial(n, so_far=1):
+            def thunk():
+                if n == 0:
+                    return so_far
+                return thunk_factorial(n - 1, so_far * n)
+            return thunk
+
+        在每次调用thunk_factorial函数时都会新创建一个thunk, 以此来储存每一次计算得到的结果
+        从而不必打开新的frame导致占用过多的空间, 因为每次计算的结果都已经用so_far储存起来了
+        这样产生的结果就是一个多次嵌套的thunk, 需要反复迭代直到获得一个不可再次迭代的值
+
+        本题中思路如下：
+        调用原来的scheme_eval——直到遇见tail context——调用优化后的scheme_eval——
+        返回一个thunk——结束调用回收所用空间——继续循环调用scheme_eval
+        通过此方法可以大量减少使用过程中产生的frame, 避免达到最大栈深度
+        """
+        while isinstance(result, Unevaluated):
+            result = unoptimized_scheme_eval(result.expr, result.env)
+        return result
         # END OPTIONAL PROBLEM 1
     return optimized_eval
 
@@ -136,4 +170,4 @@ def optimize_tail_calls(unoptimized_scheme_eval):
 # Uncomment the following line to apply tail call optimization #
 ################################################################
 
-# scheme_eval = optimize_tail_calls(scheme_eval)
+scheme_eval = optimize_tail_calls(scheme_eval)
