@@ -1,2 +1,7 @@
 .pyc
 *:Zone.Identifier
+*.zip
+.ok*
+__pycache__
+__pycache__/*
+*:Zone.Identifier
